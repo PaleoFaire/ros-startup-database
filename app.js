@@ -266,16 +266,16 @@ function initFilters() {
   }
 
   // Event listeners for all filters
-  if (searchInput) searchInput.addEventListener('input', filterCompanies);
-  if (sectorFilter) sectorFilter.addEventListener('change', handleSectorDropdownChange);
-  if (countryFilter) countryFilter.addEventListener('change', filterCompanies);
-  if (stateFilter) stateFilter.addEventListener('change', filterCompanies);
-  if (stageFilter) stageFilter.addEventListener('change', filterCompanies);
-  if (signalFilter) signalFilter.addEventListener('change', filterCompanies);
-  if (specialFilter) specialFilter.addEventListener('change', filterCompanies);
-  if (sortFilter) sortFilter.addEventListener('change', filterCompanies);
-  if (resetBtn) resetBtn.addEventListener('click', resetFilters);
-  if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+  searchInput?.addEventListener('input', filterCompanies);
+  sectorFilter?.addEventListener('change', handleSectorDropdownChange);
+  countryFilter?.addEventListener('change', filterCompanies);
+  stateFilter?.addEventListener('change', filterCompanies);
+  stageFilter?.addEventListener('change', filterCompanies);
+  signalFilter?.addEventListener('change', filterCompanies);
+  specialFilter?.addEventListener('change', filterCompanies);
+  sortFilter?.addEventListener('change', filterCompanies);
+  resetBtn?.addEventListener('click', resetFilters);
+  exportBtn?.addEventListener('click', exportCSV);
 
   // Update initial results count
   updateResultsCount(COMPANIES.length);
