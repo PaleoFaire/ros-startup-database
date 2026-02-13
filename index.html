@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS Startup Database | Rational Optimist Society</title>
+    <meta name="description" content="Curated frontier tech startups featured by the Rational Optimist Society. Defense, space, energy, manufacturing, and more.">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <span class="logo-icon">🚀</span>
+                <span class="logo-text">ROS Startup Database</span>
+            </a>
+            <div class="nav-links">
+                <a href="#map" class="nav-link">Map</a>
+                <a href="#database" class="nav-link">Database</a>
+                <a href="https://www.rationaloptimistsociety.com" target="_blank" class="nav-link external">ROS Website ↗</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <p class="hero-eyebrow">RATIONAL OPTIMIST SOCIETY</p>
+            <h1 class="hero-title">The Startups Building Tomorrow</h1>
+            <p class="hero-subtitle">A curated database of frontier tech companies we've written about, interviewed, or visited. Defense, space, energy, manufacturing, and more.</p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number" id="company-count">0</span>
+                    <span class="stat-label">Companies</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" id="sector-count">0</span>
+                    <span class="stat-label">Sectors</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" id="funding-total">$0B+</span>
+                    <span class="stat-label">Total Raised</span>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <a href="#map" class="btn primary">🗺️ Explore Map</a>
+                <a href="#database" class="btn secondary">📊 View Database</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Map Section -->
+    <section id="map" class="map-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-eyebrow">GLOBAL VIEW</p>
+                <h2>Innovation Map</h2>
+                <p>Where the future is being built — startups featured by the Rational Optimist Society.</p>
+            </div>
+        </div>
+        <div class="map-container">
+            <div id="startup-map"></div>
+            <div class="map-legend">
+                <div class="legend-item"><span class="legend-dot defense"></span> Defense</div>
+                <div class="legend-item"><span class="legend-dot space"></span> Space</div>
+                <div class="legend-item"><span class="legend-dot energy"></span> Energy</div>
+                <div class="legend-item"><span class="legend-dot manufacturing"></span> Manufacturing</div>
+                <div class="legend-item"><span class="legend-dot other"></span> Other</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Database Section -->
+    <section id="database" class="database-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-eyebrow">FULL DATABASE</p>
+                <h2>Startup Directory</h2>
+                <p>Every company we've featured — searchable and sortable.</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <input type="text" id="search-input" placeholder="Search companies..." class="search-input">
+                <select id="sector-filter" class="filter-select">
+                    <option value="all">All Sectors</option>
+                </select>
+                <select id="stage-filter" class="filter-select">
+                    <option value="all">All Stages</option>
+                </select>
+            </div>
+
+            <!-- Database Grid -->
+            <div class="database-grid" id="database-grid"></div>
+        </div>
+    </section>
+
+    <!-- Company Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="company-modal">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div class="modal-content" id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon">🚀</span>
+                    <span>ROS Startup Database</span>
+                </div>
+                <p class="footer-text">Curated by the <a href="https://www.rationaloptimistsociety.com" target="_blank">Rational Optimist Society</a></p>
+                <p class="footer-disclaimer">Data sourced from public filings, press releases, and ROS research. Last updated: February 2026.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
