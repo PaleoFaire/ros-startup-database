@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   initStats();
   initMap();
+  initSectorChips();
   initFilters();
   initDatabase();
   initModal();
@@ -161,12 +162,57 @@ function truncate(str, length) {
   return str.length > length ? str.substring(0, length) + '...' : str;
 }
 
+// ─── SECTOR CHIPS ───
+function initSectorChips() {
+  const container = document.getElementById('sector-chips');
+  if (!container) return;
+
+  // Get unique sectors from data
+  const sectors = [...new Set(COMPANIES.map(c => c.sector))].sort();
+
+  // Create chip for each sector
+  sectors.forEach(sector => {
+    const chip = document.createElement('button');
+    chip.className = 'sector-chip';
+    chip.dataset.sector = sector;
+    chip.textContent = getSectorShort(sector);
+    chip.addEventListener('click', () => handleSectorChipClick(chip));
+    container.appendChild(chip);
+  });
+
+  // Add click handler to "All" chip
+  const allChip = container.querySelector('[data-sector="all"]');
+  if (allChip) {
+    allChip.addEventListener('click', () => handleSectorChipClick(allChip));
+  }
+}
+
+function handleSectorChipClick(chip) {
+  const container = document.getElementById('sector-chips');
+  const sectorFilter = document.getElementById('sector-filter');
+
+  // Update active state
+  container.querySelectorAll('.sector-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+
+  // Update dropdown to match
+  if (sectorFilter) {
+    sectorFilter.value = chip.dataset.sector;
+  }
+
+  filterCompanies();
+}
+
 // ─── FILTERS ───
 function initFilters() {
   const searchInput = document.getElementById('search-input');
   const sectorFilter = document.getElementById('sector-filter');
+  const countryFilter = document.getElementById('country-filter');
   const stateFilter = document.getElementById('state-filter');
   const stageFilter = document.getElementById('stage-filter');
+  const signalFilter = document.getElementById('signal-filter');
+  const specialFilter = document.getElementById('special-filter');
+  const sortFilter = document.getElementById('sort-filter');
   const resetBtn = document.getElementById('reset-filters');
   const exportBtn = document.getElementById('export-csv');
 
@@ -219,37 +265,45 @@ function initFilters() {
     });
   }
 
-  // Event listeners
-  if (searchInput) {
-    searchInput.addEventListener('input', filterCompanies);
-  }
-  if (sectorFilter) {
-    sectorFilter.addEventListener('change', filterCompanies);
-  }
-  if (stateFilter) {
-    stateFilter.addEventListener('change', filterCompanies);
-  }
-  if (stageFilter) {
-    stageFilter.addEventListener('change', filterCompanies);
-  }
-  if (resetBtn) {
-    resetBtn.addEventListener('click', resetFilters);
-  }
-  if (exportBtn) {
-    exportBtn.addEventListener('click', exportCSV);
-  }
+  // Event listeners for all filters
+  if (searchInput) searchInput.addEventListener('input', filterCompanies);
+  if (sectorFilter) sectorFilter.addEventListener('change', handleSectorDropdownChange);
+  if (countryFilter) countryFilter.addEventListener('change', filterCompanies);
+  if (stateFilter) stateFilter.addEventListener('change', filterCompanies);
+  if (stageFilter) stageFilter.addEventListener('change', filterCompanies);
+  if (signalFilter) signalFilter.addEventListener('change', filterCompanies);
+  if (specialFilter) specialFilter.addEventListener('change', filterCompanies);
+  if (sortFilter) sortFilter.addEventListener('change', filterCompanies);
+  if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+  if (exportBtn) exportBtn.addEventListener('click', exportCSV);
 
   // Update initial results count
   updateResultsCount(COMPANIES.length);
 }
 
+function handleSectorDropdownChange() {
+  const sectorFilter = document.getElementById('sector-filter');
+  const container = document.getElementById('sector-chips');
+
+  // Update chip active states to match dropdown
+  container.querySelectorAll('.sector-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.sector === sectorFilter.value);
+  });
+
+  filterCompanies();
+}
+
 function filterCompanies() {
   const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
   const sectorValue = document.getElementById('sector-filter')?.value || 'all';
+  const countryValue = document.getElementById('country-filter')?.value || 'all';
   const stateValue = document.getElementById('state-filter')?.value || 'all';
   const stageValue = document.getElementById('stage-filter')?.value || 'all';
+  const signalValue = document.getElementById('signal-filter')?.value || 'all';
+  const specialValue = document.getElementById('special-filter')?.value || 'all';
+  const sortValue = document.getElementById('sort-filter')?.value || 'name-asc';
 
-  const filtered = COMPANIES.filter(company => {
+  let filtered = COMPANIES.filter(company => {
     // Search matches name, description, tags, founder, investors
     const matchesSearch = !searchTerm ||
       company.name.toLowerCase().includes(searchTerm) ||
@@ -259,22 +313,106 @@ function filterCompanies() {
       (company.investors && company.investors.some(inv => inv.toLowerCase().includes(searchTerm)));
 
     const matchesSector = sectorValue === 'all' || company.sector === sectorValue;
+    const matchesCountry = countryValue === 'all' || (company.country === countryValue) || (countryValue === 'USA' && !company.country);
     const matchesState = stateValue === 'all' || company.state === stateValue;
     const matchesStage = stageValue === 'all' || company.fundingStage === stageValue;
 
-    return matchesSearch && matchesSector && matchesState && matchesStage;
+    // Signal filters
+    let matchesSignal = true;
+    if (signalValue !== 'all') {
+      matchesSignal = company.signals && company.signals.includes(signalValue);
+    }
+
+    // Special filters
+    let matchesSpecial = true;
+    if (specialValue === 'ros-featured') {
+      matchesSpecial = company.rosCoverage && company.rosCoverage.length > 0;
+    } else if (specialValue === 'podcast-guest') {
+      matchesSpecial = company.rosCoverage && company.rosCoverage.toLowerCase().includes('podcast');
+    } else if (specialValue === 'site-visit') {
+      matchesSpecial = company.rosCoverage && company.rosCoverage.toLowerCase().includes('visit');
+    } else if (specialValue === 'unicorn') {
+      matchesSpecial = parseValuation(company.valuation) >= 1000;
+    } else if (specialValue === 'decacorn') {
+      matchesSpecial = parseValuation(company.valuation) >= 10000;
+    }
+
+    return matchesSearch && matchesSector && matchesCountry && matchesState && matchesStage && matchesSignal && matchesSpecial;
   });
+
+  // Sort
+  filtered = sortCompanies(filtered, sortValue);
 
   renderDatabase(filtered);
   updateResultsCount(filtered.length);
   updateMapMarkers(filtered);
 }
 
+function parseValuation(val) {
+  if (!val) return 0;
+  const match = val.match(/\$([\d.]+)([MB])/);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const multiplier = match[2] === 'B' ? 1000 : 1;
+    return value * multiplier;
+  }
+  return 0;
+}
+
+function parseFunding(val) {
+  if (!val) return 0;
+  const match = val.match(/\$([\d.]+)([MB])/);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const multiplier = match[2] === 'B' ? 1000 : 1;
+    return value * multiplier;
+  }
+  return 0;
+}
+
+function sortCompanies(companies, sortValue) {
+  const sorted = [...companies];
+
+  switch (sortValue) {
+    case 'name-asc':
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case 'name-desc':
+      sorted.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case 'funding-desc':
+      sorted.sort((a, b) => parseFunding(b.totalRaised) - parseFunding(a.totalRaised));
+      break;
+    case 'valuation-desc':
+      sorted.sort((a, b) => parseValuation(b.valuation) - parseValuation(a.valuation));
+      break;
+    case 'founded-desc':
+      sorted.sort((a, b) => (b.founded || 0) - (a.founded || 0));
+      break;
+    case 'founded-asc':
+      sorted.sort((a, b) => (a.founded || 9999) - (b.founded || 9999));
+      break;
+  }
+
+  return sorted;
+}
+
 function resetFilters() {
   document.getElementById('search-input').value = '';
   document.getElementById('sector-filter').value = 'all';
+  document.getElementById('country-filter').value = 'all';
   document.getElementById('state-filter').value = 'all';
   document.getElementById('stage-filter').value = 'all';
+  document.getElementById('signal-filter').value = 'all';
+  document.getElementById('special-filter').value = 'all';
+  document.getElementById('sort-filter').value = 'name-asc';
+
+  // Reset sector chips
+  const container = document.getElementById('sector-chips');
+  container.querySelectorAll('.sector-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.sector === 'all');
+  });
+
   filterCompanies();
 }
 
@@ -318,7 +456,7 @@ function exportCSV() {
   });
 
   // Build CSV
-  const headers = ['Name', 'Sector', 'Location', 'State', 'Founded', 'Stage', 'Total Raised', 'Valuation', 'Founder', 'Investors', 'Description'];
+  const headers = ['Name', 'Sector', 'Location', 'State', 'Founded', 'Stage', 'Total Raised', 'Valuation', 'Founder', 'Investors', 'ROS Coverage', 'Description'];
   const rows = filtered.map(c => [
     c.name || '',
     c.sector || '',
@@ -330,6 +468,7 @@ function exportCSV() {
     c.valuation || '',
     c.founder || '',
     (c.investors || []).join('; '),
+    c.rosCoverage || '',
     (c.description || '').replace(/"/g, '""')
   ]);
 
@@ -402,7 +541,7 @@ function getSectorShort(sector) {
     'Defense & Security': 'Defense',
     'Nuclear Energy': 'Nuclear',
     'Fusion Energy': 'Fusion',
-    'Robotics & Manufacturing': 'Mfg',
+    'Robotics & Manufacturing': 'Robotics',
     'Space & Aerospace': 'Space',
     'Supersonic & Hypersonic': 'Aviation',
     'Climate & Energy': 'Climate',
@@ -410,7 +549,7 @@ function getSectorShort(sector) {
     'Longevity': 'Longevity',
     'Neurotech': 'Neuro',
     'Consumer Tech': 'Consumer',
-    'Education': 'Edu',
+    'Education': 'Education',
     'Ocean Tech': 'Ocean',
     'AI & Technology': 'AI',
     'Semiconductors': 'Chips',

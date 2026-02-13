@@ -92,14 +92,24 @@
                 <p>Every company we've featured — searchable and sortable.</p>
             </div>
 
-            <!-- Filters -->
-            <div class="filter-bar">
-                <div class="filter-row">
-                    <input type="text" id="search-input" placeholder="Search companies, founders, tags..." class="search-input">
-                </div>
-                <div class="filter-row">
+            <!-- Sector Chips -->
+            <div class="sector-chips" id="sector-chips">
+                <button class="sector-chip active" data-sector="all">All</button>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <div class="filter-row-main">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-input" placeholder="Search companies, founders, investors..." class="search-input">
+                    </div>
                     <select id="sector-filter" class="filter-select">
                         <option value="all">All Sectors</option>
+                    </select>
+                    <select id="country-filter" class="filter-select">
+                        <option value="all">All Countries</option>
+                        <option value="USA">United States</option>
                     </select>
                     <select id="state-filter" class="filter-select">
                         <option value="all">All States</option>
@@ -108,10 +118,36 @@
                         <option value="all">All Stages</option>
                     </select>
                 </div>
+                <div class="filter-row-secondary">
+                    <select id="signal-filter" class="filter-select">
+                        <option value="all">All Signals</option>
+                        <option value="recent-funding">Recent Funding</option>
+                        <option value="gov-contract">Gov Contract</option>
+                        <option value="hiring">Hiring Surge</option>
+                        <option value="product-launch">Product Launch</option>
+                    </select>
+                    <select id="special-filter" class="filter-select">
+                        <option value="all">Special Filters</option>
+                        <option value="ros-featured">ROS Featured</option>
+                        <option value="podcast-guest">Podcast Guest</option>
+                        <option value="site-visit">Site Visit</option>
+                        <option value="unicorn">Unicorn ($1B+)</option>
+                        <option value="decacorn">Decacorn ($10B+)</option>
+                    </select>
+                    <div class="filter-spacer"></div>
+                    <select id="sort-filter" class="filter-select sort-select">
+                        <option value="name-asc">Sort: A-Z</option>
+                        <option value="name-desc">Sort: Z-A</option>
+                        <option value="funding-desc">Sort: Most Funded</option>
+                        <option value="valuation-desc">Sort: Highest Valuation</option>
+                        <option value="founded-desc">Sort: Newest</option>
+                        <option value="founded-asc">Sort: Oldest</option>
+                    </select>
+                </div>
                 <div class="filter-actions">
                     <span class="results-count" id="results-count">95 companies</span>
                     <button class="btn-reset" id="reset-filters">Reset Filters</button>
-                    <button class="btn-export" id="export-csv">Export CSV</button>
+                    <button class="btn-export" id="export-csv">📥 Export CSV</button>
                 </div>
             </div>
 
