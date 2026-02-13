@@ -86,23 +86,28 @@ function getSectorColor(sector) {
   const colors = {
     'Defense & Security': '#ef4444',
     'Nuclear Energy': '#22c55e',
+    'Fusion Energy': '#22c55e',
     'Robotics & Manufacturing': '#3b82f6',
     'Space & Aerospace': '#8b5cf6',
     'Supersonic & Hypersonic': '#8b5cf6',
     'Climate & Energy': '#22c55e',
     'Biotech & Health': '#f59e0b',
+    'Longevity': '#f59e0b',
+    'Neurotech': '#f59e0b',
     'Consumer Tech': '#f59e0b',
     'Education': '#f59e0b',
-    'Ocean Tech': '#3b82f6'
+    'Ocean Tech': '#3b82f6',
+    'AI & Technology': '#8b5cf6',
+    'Semiconductors': '#3b82f6'
   };
   return colors[sector] || '#f59e0b';
 }
 
 function getSectorClass(sector) {
   if (sector.includes('Defense')) return 'defense';
-  if (sector.includes('Nuclear') || sector.includes('Climate') || sector.includes('Energy')) return 'energy';
-  if (sector.includes('Space') || sector.includes('Supersonic') || sector.includes('Hypersonic')) return 'space';
-  if (sector.includes('Robotics') || sector.includes('Manufacturing') || sector.includes('Ocean')) return 'manufacturing';
+  if (sector.includes('Nuclear') || sector.includes('Fusion') || sector.includes('Climate') || sector.includes('Energy')) return 'energy';
+  if (sector.includes('Space') || sector.includes('Supersonic') || sector.includes('Hypersonic') || sector.includes('AI')) return 'space';
+  if (sector.includes('Robotics') || sector.includes('Manufacturing') || sector.includes('Ocean') || sector.includes('Semiconductor')) return 'manufacturing';
   return 'other';
 }
 
@@ -138,7 +143,7 @@ function addMarkers() {
         <div class="map-popup-name">${company.name}</div>
         <div class="map-popup-sector">${company.sector}</div>
         <div class="map-popup-description">${truncate(company.description, 120)}</div>
-        <button class="map-popup-btn" onclick="openModal('${company.name}')">View Details</button>
+        <button class="map-popup-btn" onclick="openModal('${company.name.replace(/'/g, "\\'")}')">View Details</button>
       </div>
     `;
 
@@ -160,7 +165,10 @@ function truncate(str, length) {
 function initFilters() {
   const searchInput = document.getElementById('search-input');
   const sectorFilter = document.getElementById('sector-filter');
+  const stateFilter = document.getElementById('state-filter');
   const stageFilter = document.getElementById('stage-filter');
+  const resetBtn = document.getElementById('reset-filters');
+  const exportBtn = document.getElementById('export-csv');
 
   // Populate sector filter
   if (sectorFilter) {
@@ -169,6 +177,35 @@ function initFilters() {
       option.value = sector;
       option.textContent = sector;
       sectorFilter.appendChild(option);
+    });
+  }
+
+  // Populate state filter dynamically from data
+  if (stateFilter) {
+    const states = [...new Set(COMPANIES.map(c => c.state).filter(s => s && s.length > 0))].sort();
+    const stateNames = {
+      'CA': 'California',
+      'TX': 'Texas',
+      'MA': 'Massachusetts',
+      'NY': 'New York',
+      'CO': 'Colorado',
+      'WA': 'Washington',
+      'GA': 'Georgia',
+      'DC': 'Washington DC',
+      'MD': 'Maryland',
+      'VA': 'Virginia',
+      'FL': 'Florida',
+      'PA': 'Pennsylvania',
+      'OH': 'Ohio',
+      'IL': 'Illinois',
+      'AZ': 'Arizona',
+      'NV': 'Nevada'
+    };
+    states.forEach(state => {
+      const option = document.createElement('option');
+      option.value = state;
+      option.textContent = stateNames[state] || state;
+      stateFilter.appendChild(option);
     });
   }
 
@@ -189,29 +226,124 @@ function initFilters() {
   if (sectorFilter) {
     sectorFilter.addEventListener('change', filterCompanies);
   }
+  if (stateFilter) {
+    stateFilter.addEventListener('change', filterCompanies);
+  }
   if (stageFilter) {
     stageFilter.addEventListener('change', filterCompanies);
   }
+  if (resetBtn) {
+    resetBtn.addEventListener('click', resetFilters);
+  }
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportCSV);
+  }
+
+  // Update initial results count
+  updateResultsCount(COMPANIES.length);
 }
 
 function filterCompanies() {
   const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
   const sectorValue = document.getElementById('sector-filter')?.value || 'all';
+  const stateValue = document.getElementById('state-filter')?.value || 'all';
+  const stageValue = document.getElementById('stage-filter')?.value || 'all';
+
+  const filtered = COMPANIES.filter(company => {
+    // Search matches name, description, tags, founder, investors
+    const matchesSearch = !searchTerm ||
+      company.name.toLowerCase().includes(searchTerm) ||
+      company.description.toLowerCase().includes(searchTerm) ||
+      (company.founder && company.founder.toLowerCase().includes(searchTerm)) ||
+      (company.tags && company.tags.some(tag => tag.toLowerCase().includes(searchTerm))) ||
+      (company.investors && company.investors.some(inv => inv.toLowerCase().includes(searchTerm)));
+
+    const matchesSector = sectorValue === 'all' || company.sector === sectorValue;
+    const matchesState = stateValue === 'all' || company.state === stateValue;
+    const matchesStage = stageValue === 'all' || company.fundingStage === stageValue;
+
+    return matchesSearch && matchesSector && matchesState && matchesStage;
+  });
+
+  renderDatabase(filtered);
+  updateResultsCount(filtered.length);
+  updateMapMarkers(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('sector-filter').value = 'all';
+  document.getElementById('state-filter').value = 'all';
+  document.getElementById('stage-filter').value = 'all';
+  filterCompanies();
+}
+
+function updateResultsCount(count) {
+  const el = document.getElementById('results-count');
+  if (el) {
+    el.textContent = `${count} ${count === 1 ? 'company' : 'companies'}`;
+  }
+}
+
+function updateMapMarkers(filteredCompanies) {
+  const filteredNames = new Set(filteredCompanies.map(c => c.name));
+
+  markers.forEach(({ marker, company }) => {
+    if (filteredNames.has(company.name)) {
+      marker.setOpacity(1);
+    } else {
+      marker.setOpacity(0.15);
+    }
+  });
+}
+
+function exportCSV() {
+  const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+  const sectorValue = document.getElementById('sector-filter')?.value || 'all';
+  const stateValue = document.getElementById('state-filter')?.value || 'all';
   const stageValue = document.getElementById('stage-filter')?.value || 'all';
 
   const filtered = COMPANIES.filter(company => {
     const matchesSearch = !searchTerm ||
       company.name.toLowerCase().includes(searchTerm) ||
       company.description.toLowerCase().includes(searchTerm) ||
+      (company.founder && company.founder.toLowerCase().includes(searchTerm)) ||
       (company.tags && company.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
 
     const matchesSector = sectorValue === 'all' || company.sector === sectorValue;
+    const matchesState = stateValue === 'all' || company.state === stateValue;
     const matchesStage = stageValue === 'all' || company.fundingStage === stageValue;
 
-    return matchesSearch && matchesSector && matchesStage;
+    return matchesSearch && matchesSector && matchesState && matchesStage;
   });
 
-  renderDatabase(filtered);
+  // Build CSV
+  const headers = ['Name', 'Sector', 'Location', 'State', 'Founded', 'Stage', 'Total Raised', 'Valuation', 'Founder', 'Investors', 'Description'];
+  const rows = filtered.map(c => [
+    c.name || '',
+    c.sector || '',
+    c.location || '',
+    c.state || '',
+    c.founded || '',
+    c.fundingStage || '',
+    c.totalRaised || '',
+    c.valuation || '',
+    c.founder || '',
+    (c.investors || []).join('; '),
+    (c.description || '').replace(/"/g, '""')
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n');
+
+  // Download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `ros-startups-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
 }
 
 // ─── DATABASE ───
@@ -228,18 +360,19 @@ function renderDatabase(companies) {
       <div class="no-results">
         <div class="no-results-icon">🔍</div>
         <div class="no-results-text">No companies match your filters</div>
+        <button class="btn-reset" onclick="resetFilters()">Reset Filters</button>
       </div>
     `;
     return;
   }
 
   grid.innerHTML = companies.map(company => `
-    <div class="company-card" onclick="openModal('${company.name}')">
+    <div class="company-card" onclick="openModal('${company.name.replace(/'/g, "\\'")}')">
       <div class="card-header">
         <div class="card-name">${company.name}</div>
         <span class="card-sector ${getSectorClass(company.sector)}">${getSectorShort(company.sector)}</span>
       </div>
-      <div class="card-description">${company.description}</div>
+      <div class="card-description">${truncate(company.description, 150)}</div>
       <div class="card-meta">
         ${company.location ? `
           <div class="card-meta-item">
@@ -268,14 +401,21 @@ function getSectorShort(sector) {
   const shorts = {
     'Defense & Security': 'Defense',
     'Nuclear Energy': 'Nuclear',
+    'Fusion Energy': 'Fusion',
     'Robotics & Manufacturing': 'Mfg',
     'Space & Aerospace': 'Space',
     'Supersonic & Hypersonic': 'Aviation',
     'Climate & Energy': 'Climate',
     'Biotech & Health': 'Bio',
+    'Longevity': 'Longevity',
+    'Neurotech': 'Neuro',
     'Consumer Tech': 'Consumer',
     'Education': 'Edu',
-    'Ocean Tech': 'Ocean'
+    'Ocean Tech': 'Ocean',
+    'AI & Technology': 'AI',
+    'Semiconductors': 'Chips',
+    'Delivery & Logistics': 'Logistics',
+    'Housing & Construction': 'Housing'
   };
   return shorts[sector] || sector;
 }
@@ -417,5 +557,6 @@ function closeModal() {
   }
 }
 
-// Make openModal globally accessible
+// Make functions globally accessible
 window.openModal = openModal;
+window.resetFilters = resetFilters;

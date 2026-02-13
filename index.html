@@ -94,13 +94,25 @@
 
             <!-- Filters -->
             <div class="filter-bar">
-                <input type="text" id="search-input" placeholder="Search companies..." class="search-input">
-                <select id="sector-filter" class="filter-select">
-                    <option value="all">All Sectors</option>
-                </select>
-                <select id="stage-filter" class="filter-select">
-                    <option value="all">All Stages</option>
-                </select>
+                <div class="filter-row">
+                    <input type="text" id="search-input" placeholder="Search companies, founders, tags..." class="search-input">
+                </div>
+                <div class="filter-row">
+                    <select id="sector-filter" class="filter-select">
+                        <option value="all">All Sectors</option>
+                    </select>
+                    <select id="state-filter" class="filter-select">
+                        <option value="all">All States</option>
+                    </select>
+                    <select id="stage-filter" class="filter-select">
+                        <option value="all">All Stages</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <span class="results-count" id="results-count">95 companies</span>
+                    <button class="btn-reset" id="reset-filters">Reset Filters</button>
+                    <button class="btn-export" id="export-csv">Export CSV</button>
+                </div>
             </div>
 
             <!-- Database Grid -->
