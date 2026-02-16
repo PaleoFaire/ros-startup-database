@@ -115,45 +115,72 @@ function getSectorClass(sector) {
 function addMarkers() {
   markers = [];
 
+  // Group companies by location to handle overlaps
+  const locationGroups = {};
   COMPANIES.forEach(company => {
     if (!company.lat || !company.lng) return;
+    const key = `${company.lat.toFixed(4)},${company.lng.toFixed(4)}`;
+    if (!locationGroups[key]) {
+      locationGroups[key] = [];
+    }
+    locationGroups[key].push(company);
+  });
 
-    const color = getSectorColor(company.sector);
+  // Add markers with spiral offset for overlapping locations
+  Object.values(locationGroups).forEach(group => {
+    group.forEach((company, index) => {
+      const color = getSectorColor(company.sector);
 
-    // Create custom icon
-    const icon = L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="
-        width: 14px;
-        height: 14px;
-        background: ${color};
-        border: 2px solid rgba(255,255,255,0.8);
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      "></div>`,
-      iconSize: [14, 14],
-      iconAnchor: [7, 7]
+      // Calculate offset for companies at same location (spiral pattern)
+      let offsetLat = 0;
+      let offsetLng = 0;
+      if (group.length > 1 && index > 0) {
+        const angle = (index * 137.5) * (Math.PI / 180); // Golden angle for nice distribution
+        const radius = 0.008 + (index * 0.004); // Increasing radius
+        offsetLat = radius * Math.cos(angle);
+        offsetLng = radius * Math.sin(angle);
+      }
+
+      const finalLat = company.lat + offsetLat;
+      const finalLng = company.lng + offsetLng;
+
+      // Create custom icon
+      const icon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+          width: 14px;
+          height: 14px;
+          background: ${color};
+          border: 2px solid rgba(255,255,255,0.8);
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          cursor: pointer;
+        "></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      });
+
+      const marker = L.marker([finalLat, finalLng], { icon })
+        .addTo(map);
+
+      // Popup content
+      const popupContent = `
+        <div class="map-popup">
+          <div class="map-popup-name">${company.name}</div>
+          <div class="map-popup-sector">${company.sector}</div>
+          <div class="map-popup-location">${company.location || ''}</div>
+          <div class="map-popup-description">${truncate(company.description, 120)}</div>
+          <button class="map-popup-btn" onclick="openModal('${company.name.replace(/'/g, "\\'")}')">View Details</button>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent, {
+        maxWidth: 280,
+        className: 'custom-popup'
+      });
+
+      markers.push({ marker, company });
     });
-
-    const marker = L.marker([company.lat, company.lng], { icon })
-      .addTo(map);
-
-    // Popup content
-    const popupContent = `
-      <div class="map-popup">
-        <div class="map-popup-name">${company.name}</div>
-        <div class="map-popup-sector">${company.sector}</div>
-        <div class="map-popup-description">${truncate(company.description, 120)}</div>
-        <button class="map-popup-btn" onclick="openModal('${company.name.replace(/'/g, "\\'")}')">View Details</button>
-      </div>
-    `;
-
-    marker.bindPopup(popupContent, {
-      maxWidth: 280,
-      className: 'custom-popup'
-    });
-
-    markers.push({ marker, company });
   });
 }
 
