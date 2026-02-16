@@ -134,9 +134,10 @@ function addMarkers() {
       // Calculate offset for companies at same location (spiral pattern)
       let offsetLat = 0;
       let offsetLng = 0;
-      if (group.length > 1 && index > 0) {
+      if (group.length > 1) {
+        // Use larger offsets so markers are clearly visible and separate
         const angle = (index * 137.5) * (Math.PI / 180); // Golden angle for nice distribution
-        const radius = 0.008 + (index * 0.004); // Increasing radius
+        const radius = 0.02 + (index * 0.015); // Much larger radius for visibility
         offsetLat = radius * Math.cos(angle);
         offsetLng = radius * Math.sin(angle);
       }
